@@ -90,3 +90,11 @@ Do not return anything else. No markdown. No text before or after.
             "error": "Unhandled exception",
             "exception": str(e)
         }
+from fastapi import Request
+from stream_plan import stream_plan, StreamPlanRequest
+
+@app.post("/stream-plan")
+async def stream_plan_route(request: Request):
+    body = await request.json()
+    req_data = StreamPlanRequest(**body)
+    return stream_plan(req_data)

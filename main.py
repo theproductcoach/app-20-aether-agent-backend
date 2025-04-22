@@ -31,7 +31,7 @@ class PlanResponse(BaseModel):
     totalCost: str
     agentThoughts: List[str]
 
-@app.post("/plan", response_model=PlanResponse)
+@app.post("/plan")
 async def plan_trip(req: PlanRequest):
     trace = []
 
@@ -47,7 +47,8 @@ You are an intelligent travel planning agent.
 Plan a {req.dates}-length trip to {req.destination} with a budget of {req.budget} {req.currency}.
 Interests: {', '.join(req.interests) or 'General'}.
 
-Return valid JSON only in this format:
+Return valid JSON ONLY in this format:
+
 {{
   "itinerary": [
     {{ "day": "Day 1", "plan": "..." }},
@@ -57,27 +58,37 @@ Return valid JSON only in this format:
   "agentThoughts": ["short points about how you planned the trip"]
 }}
 
-ONLY return raw JSON. Do NOT include ```json or any code blocks.
+Do not return anything else. No markdown. No text before or after.
 """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        temperature=0.7,
-        messages=[
-            {"role": "system", "content": "You are a helpful travel planner."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-
-    raw = response.choices[0].message["content"]
-    
-    import json
     try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            temperature=0.7,
+            messages=[
+                {"role": "system", "content": "You are a helpful travel planner."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        raw = response.choices[0].message["content"]
+        import json
         result = json.loads(raw)
-    except json.JSONDecodeError:
-        return {"error": "OpenAI returned invalid JSON", "raw": raw}
 
-    result["agentThoughts"].insert(0, "Started with user preferences.")
-    result["agentThoughts"].extend(trace)
+        result["agentThoughts"].insert(0, "Started with user preferences.")
+        result["agentThoughts"].extend(trace)
 
-    return result
+        return result
+
+    except json.JSONDecodeError as json_err:
+        return {
+            "error": "OpenAI returned invalid JSON",
+            "raw": raw if 'raw' in locals() else "No response to parse",
+            "exception": str(json_err)
+        }
+
+    except Exception as e:
+        return {
+            "error": "Unhandled exception",
+            "exception": str(e)
+        }

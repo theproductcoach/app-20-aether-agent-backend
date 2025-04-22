@@ -1,13 +1,12 @@
-
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict
-
-import openai
 import os
+import json
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+from openai import OpenAI
+openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = FastAPI()
 
@@ -62,7 +61,7 @@ Do not return anything else. No markdown. No text before or after.
 """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-4",
             temperature=0.7,
             messages=[
@@ -71,8 +70,7 @@ Do not return anything else. No markdown. No text before or after.
             ]
         )
 
-        raw = response.choices[0].message["content"]
-        import json
+        raw = response.choices[0].message.content
         result = json.loads(raw)
 
         result["agentThoughts"].insert(0, "Started with user preferences.")

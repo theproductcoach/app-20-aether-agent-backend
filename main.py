@@ -56,6 +56,8 @@ Return valid JSON only in this format:
   "totalCost": "formatted like '£450 GBP'",
   "agentThoughts": ["short points about how you planned the trip"]
 }}
+
+ONLY return raw JSON. Do NOT include ```json or any code blocks.
 """
 
     response = openai.ChatCompletion.create(
@@ -68,8 +70,12 @@ Return valid JSON only in this format:
     )
 
     raw = response.choices[0].message["content"]
+    
     import json
-    result = json.loads(raw)
+    try:
+        result = json.loads(raw)
+    except json.JSONDecodeError:
+        return {"error": "OpenAI returned invalid JSON", "raw": raw}
 
     result["agentThoughts"].insert(0, "Started with user preferences.")
     result["agentThoughts"].extend(trace)

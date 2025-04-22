@@ -30,7 +30,7 @@ class PlanResponse(BaseModel):
     totalCost: str
     agentThoughts: List[str]
 
-@app.post("/plan")
+@app.get("/stream-plan")
 async def plan_trip(req: PlanRequest):
     trace = []
 

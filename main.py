@@ -114,8 +114,7 @@ async def stream_plan(
                 elif kind == "on_chat_model_stream":
                     chunk = event.get("data", {}).get("chunk")
                     if chunk and hasattr(chunk, "content"):
-                        content = chunk.content
-                        yield f"data: {json.dumps({'type': 'thought', 'content': content})}\n\n"
+                        yield f"data: {json.dumps({'type': 'narration', 'content': chunk.content})}\n\n"
 
                 elif kind == "on_chain_end":
                     output = event.get("data", {}).get("output", {}).get("output")
